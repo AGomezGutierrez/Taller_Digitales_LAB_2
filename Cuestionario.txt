@@ -7,4 +7,7 @@ circuitos de Moore) y (2) aquellos en los que la salida o salidas dependen tanto
 
 2. Explique los conceptos de setup time y hold time. ¿Qué importancia tienen en el diseño de sistemas digitales?
 SETUP TIME: El dato debe estar estable un tiempo antes que el flanco activo de reloj.
-HOLD TIME: El flanco debe permanecer un tiempo después del flanco activo de reloj 
+HOLD TIME: El flanco debe permanecer un tiempo después del flanco activo de reloj.
+
+El tiempo de establecimiento, setup time (tS) es el intervalo mínimo que los niveles lógicos deben mantener constantes en las entradas (J y K, S y R o D) antes de que llegue el flanco de disparo del impulso de reloj, de modo que dichos niveles sincronicen correctamente en el flip-flop. Este intervalo, para el caso de un flip-flop
+D. El tiempo de mantenimiento, hold time (th) es el intervalo mínimo que los niveles lógicos deben mantenerse constantes en las entradas después de que haya pasado el flanco de disparo del impulso de reloj, de modo que dichos niveles se sincronicen correctamente en el flip-flop.
