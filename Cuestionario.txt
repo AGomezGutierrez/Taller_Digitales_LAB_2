@@ -22,10 +22,12 @@ Tiempo de retardo de propagación. Este parámetro limita la frecuencia o veloci
 de alto fan-out y automáticamente infiera la lógica necesaria.
 Para dividir la frecuencia Básicamente, hay dos maneras de hacerlo. La primera es utilizar el núcleo del sintetizador de reloj nativo de Xilinx. Una de las ventajas de esto es que las herramientas de Xlinx reconocerán el reloj como tal y lo enrutarán a través de las vías necesarias. Las herramientas también manejarán cualquier restricción de tiempo (no es realmente aplicable en este caso, ya que es un reloj de 2Hz).
 La segunda forma es utilizar un contador para contar el número de pulsos del reloj más rápido hasta que haya pasado la mitad de su período de reloj más lento. Ejemplo, el número de pulsos de reloj rápidos que componen un periodo de reloj de un ciclo de reloj lento es 50000000/2 = 25000000. Como queremos la mitad de un período de reloj, eso es 25000000/2 = 12500000 para cada medio ciclo. (la duración de cada alta o baja)
-Los rebotes son las falsas pulsaciones (ruido) que se producen al hacer contactos falsos en el interruptor. El proceso de eliminarlos se llama "Debounce". Los dispositivos electrónicos al cambiar de estado generan una señal que, sin ser perfectamente cuadrada, en general es más o menos "recta".
+5. Los rebotes son las falsas pulsaciones (ruido) que se producen al hacer contactos falsos en el interruptor. El proceso de eliminarlos se llama "Debounce". Los dispositivos electrónicos al cambiar de estado generan una señal que, sin ser perfectamente cuadrada, en general es más o menos "recta".
 Eliminando el rebote. Disponemos de dos formas de aplicar el debounce. Añadiendo dispositivos electrónicos que filtren la señal (debounce por hardware) o modificando nuestro código para eliminar el rebote (debounce por software).
-metastabilidad cuando se tienen entradas as´ıncronas en circuitos
-digitales
 La metaestabilidad es un fenómeno probabilístico que provoca fallos en sistemas digitales. Ocurre con mayor probabilidad cuando un circuito recibe una señal asincrónica o se intercambian señales entre sistemas sincrónicos con dominios de reloj no relacionados.
+
+
+6. IP-CORE: (núcleo IP) es un bloque funcional de lógica o datos que se utiliza para crear una matriz de puertas programables en campo (FPGA) o un circuito integrado específico de la aplicación para un producto. Comúnmente utilizado en semiconductores, un núcleo IP es una unidad reutilizable de lógica o diseño de diseño de circuito integrado (IC).
+Clocking Wizard de Vivado es una manera fácil de configurar un CMT para producir cualquier señal de reloj requerida. El Asistente le permite ingresar las frecuencias de reloj deseadas y seleccionar algunas propiedades de la señal, y luego produce un módulo Verilog que puede incluir en su diseño
 
 
