@@ -62,7 +62,7 @@ endmodule
 Este testbench genera una señal de reloj de 100 MHz y la conecta al Clocking Wizard. También incluye el módulo "clk_checker" para verificar la salida de la señal
 de reloj de 10 MHz. Además, se incluye una señal de reset para asegurarse de que el módulo comience en un estado conocido.
 Una vez se ha completado la simulación y se ha verificado el correcto funcionamiento del PLL, se puede usar el mismo módulo en la FPGA para verificar
-el funcionamiento en el hardware real.
+el funcionamiento en el hardware real. 
 
 
 
