@@ -1,26 +1,68 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 03/16/2023 09:33:31 AM
-// Design Name: 
-// Module Name: Clocking
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+Para configurar un bloque Clocking Wizard en Verilog que permita generar un reloj interno de 10 MHz a partir de un reloj externo de 100 MHz,
+se realiza de la siguiente forma:
 
+Abrir el IP integrator en Vivado y crear un nuevo proyecto.
+En la ventana de IP Integrator, seleccionar "Create Block Design".
+En el panel de diseño, buscar y arrastrar el "Clocking Wizard" desde la pestaña "Sources" a la pestaña "Diagram".
+Configurar el Clocking Wizard de la siguiente manera:
+En la pestaña "Basic" seleccionar el tipo de reloj externo (Single-Ended o Differential), ingresar la frecuencia de entrada (100 MHz) y la frecuencia
+de salida deseada (10 MHz).
+En la pestaña "Output Clocks" seleccionar el tipo de salida deseado (Single-Ended o Differential), y asignar el nombre a la señal de salida.
+En la pestaña "Advanced" se pueden configurar otras opciones avanzadas como jitter, retardos y polaridad de la señal.
+Conectar la señal de salida del Clocking Wizard al módulo deseado para su uso.
+Módulo que permite verificar si el PLL genera el reloj de 10 MHz en la FPGA:
 
-module Clocking(
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+module clk_checker (
+    input clk_10MHz,
+    output reg led
+);
 
-    );
+always @(posedge clk_10MHz) begin
+    led <= ~led;
+end
+
 endmodule
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Este módulo simplemente hace que un LED parpadee cada vez que se recibe un flanco de subida en la señal de reloj de 10 MHz.
+Para elaborar un testbench para validar a nivel de simulación el funcionamiento del PLL, se puede hacer como sigue:
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+module testbench;
+
+reg clk_100MHz;
+wire clk_10MHz;
+reg reset;
+
+clk_checker dut (
+    .clk_10MHz(clk_10MHz),
+    .led(LED)
+);
+
+initial begin
+    reset = 1;
+    clk_100MHz = 0;
+    #10 reset = 0;
+    repeat (10000) #5 clk_100MHz = ~clk_100MHz;
+    #10000 $finish;
+end
+
+always #5 clk_100MHz = ~clk_100MHz;
+
+initial begin
+    $dumpfile("testbench.vcd");
+    $dumpvars(0, testbench);
+    #100000;
+end
+
+endmodule
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Este testbench genera una señal de reloj de 100 MHz y la conecta al Clocking Wizard. También incluye el módulo "clk_checker" para verificar la salida de la señal
+de reloj de 10 MHz. Además, se incluye una señal de reset para asegurarse de que el módulo comience en un estado conocido.
+Una vez se ha completado la simulación y se ha verificado el correcto funcionamiento del PLL, se puede usar el mismo módulo en la FPGA para verificar
+el funcionamiento en el hardware real.
+
+
+
