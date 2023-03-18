@@ -1,0 +1,87 @@
+Módulo Sincronizador y Anti-rebote:
+
+-----------------------------------------------------------------------------------------
+module sync_debounce
+  #(parameter CLK_PERIOD = 10)  // Periodo del reloj en ns
+  
+  (
+    input wire clk,             // Señal de reloj
+    input wire rst,             // Señal de reset
+    input wire en,              // Señal habilitadora
+    input wire btn,             // Señal del botón o interruptor
+    output reg btn_sync         // Señal del botón sincronizada y sin rebotes
+  );
+  
+  // Contador para la duración del rebote
+  reg [7:0] debounce_cnt = 8'd0;
+  
+  // Registro para almacenar el valor anterior del botón
+  reg btn_prev = 1'b0;
+  
+  always @(posedge clk, negedge rst)
+  begin
+    if (!rst) begin
+      debounce_cnt <= 8'd0;
+      btn_prev <= 1'b0;
+      btn_sync <= 1'b0;
+    end
+    else begin
+      // Detectar flanco positivo en la señal habilitadora
+      if (en && !btn_prev && btn) begin
+        // Incrementar el contador cada vez que se detecta un flanco positivo
+        debounce_cnt <= debounce_cnt + 1;
+      end
+      
+      // Si el contador llega a su límite, se considera que el rebote ha terminado
+      if (debounce_cnt == 8'd255) begin
+        btn_sync <= btn;
+        debounce_cnt <= 8'd0;
+      end
+      
+      // Almacenar el valor anterior del botón
+      btn_prev <= btn;
+    end
+  end
+endmodule
+-----------------------------------------------------------------------------------------
+Módulo Contador de Pruebas:
+
+-----------------------------------------------------------------------------------------
+module test_counter
+  #(parameter WIDTH = 8)  // Ancho del contador
+  
+  (
+    input wire clk,       // Señal de reloj
+    input wire rst,       // Señal de reset
+    input wire en,        // Señal habilitadora
+    input wire btn_sync,  // Señal del botón sincronizada y sin rebotes
+    output reg [WIDTH-1:0] counter_out  // Salida del contador
+  );
+  
+  always @(posedge clk, negedge rst)
+  begin
+    if (!rst) begin
+      counter_out <= 0;
+    end
+    else if (en && !en_prev) begin
+      // Incrementar el contador cada vez que se detecta un flanco positivo en la señal habilitadora
+      counter_out <= counter_out + 1;
+    end
+    
+    // Almacenar el valor anterior de la señal habilitadora
+    en_prev <= en;
+  end
+  
+  // Registro para almacenar el valor anterior de la señal habilitadora
+  reg en_prev = 1'b0;
+endmodule
+-----------------------------------------------------------------------------------------
+Módulo Top:
+-----------------------------------------------------------------------------------------
+module top
+  (
+    input wire clk,             // Señal de reloj
+    input wire rst,             // Señal de reset
+    input wire btn,             // Señal del botón o interruptor
+    output wire [7:0]
+
