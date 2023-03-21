@@ -1,68 +1,212 @@
-Para configurar un bloque Clocking Wizard en Verilog que permita generar un reloj interno de 10 MHz a partir de un reloj externo de 100 MHz,
-se realiza de la siguiente forma:
+Bloque Clocking Wizard que genere un reloj interno de 10 MHz a partir de un reloj externo de 100 MHz, se añade el archivo de biblioteca del Clocking Wizard
+al proyecto Verilog. Este archivo debe estar disponible en la documentación del fabricante del dispositivo FPGA. Después, se crea un nuevo módulo
+en Verilog que defina el Clocking Wizard y sus parámetros. 
+`timescale 1ns / 1ps
 
-Abrir el IP integrator en Vivado y crear un nuevo proyecto.
-En la ventana de IP Integrator, seleccionar "Create Block Design".
-En el panel de diseño, buscar y arrastrar el "Clocking Wizard" desde la pestaña "Sources" a la pestaña "Diagram".
-Configurar el Clocking Wizard de la siguiente manera:
-En la pestaña "Basic" seleccionar el tipo de reloj externo (Single-Ended o Differential), ingresar la frecuencia de entrada (100 MHz) y la frecuencia
-de salida deseada (10 MHz).
-En la pestaña "Output Clocks" seleccionar el tipo de salida deseado (Single-Ended o Differential), y asignar el nombre a la señal de salida.
-En la pestaña "Advanced" se pueden configurar otras opciones avanzadas como jitter, retardos y polaridad de la señal.
-Conectar la señal de salida del Clocking Wizard al módulo deseado para su uso.
-Módulo que permite verificar si el PLL genera el reloj de 10 MHz en la FPGA:
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-module clk_checker (
-    input clk_10MHz,
-    output reg led
+module clk_wiz (
+  input  wire         clk_in,
+  output reg          clk_out
 );
 
-always @(posedge clk_10MHz) begin
-    led <= ~led;
-end
+  (* CORE_GENERATION_INFO = "Clocking Wizard 1.0" *)
+  (* CORE_PARAMETER     = "CLKOUT_DIVIDE_F" *)
+  (* CORE_PARAMETER     = "CLK_FEEDBACK" *)
+  (* CORE_PARAMETER     = "CLKFBOUT_MULT_F" *)
+  (* CORE_PARAMETER     = "CLKIN1_PERIOD" *)
+  (* CORE_PARAMETER     = "CLKOUT0_DIVIDE_F" *)
+  (* CORE_PARAMETER     = "CLKOUT0_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT1_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT1_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT2_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT2_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT3_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT3_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT4_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT4_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT5_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT5_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT6_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT6_PHASE" *)
+  (* CORE_PARAMETER     = "CLKOUT7_DIVIDE" *)
+  (* CORE_PARAMETER     = "CLKOUT7_PHASE" *)
+  (* CORE_PARAMETER     = "CLK_FEEDBACK_TYPE" *)
+  (* CORE_PARAMETER     = "SIM_DEVICE" *)
+  (* CORE_PARAMETER     = "SIM_SPEED_GRADE" *)
+  (* CORE_PARAMETER     = "IS_OOC" *)
+  (* CORE_PARAMETER     = "IS_OT" *)
+  (* CORE_PARAMETER     = "LOC" *)
+  (* CORE_PARAMETER     = "BUFG" *)
+  (* CORE_PARAMETER     = "STARTUP_WAIT" *)
+  (* CORE_PARAMETER     = "DYNAMIC_CLKDIV_SEL" *)
+  (* CORE_PARAMETER     = "MANUAL_OVERRIDE_EN" *)
+  (* CORE_PARAMETER     = "MANUAL_CLKOUT_EN" *)
+  (* CORE_PARAMETER     = "MANUAL_CLKOUT_DIV" *)
+  (* CORE_PARAMETER     = "MANUAL_CLKOUT_PHASE" *)
+  (* CORE_PARAMETER     = "AXI_CLK_FREQ" *)
+  (* CORE_PARAMETER     = "REF_CLK_FREQ" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT0_DIV" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT0_PHASE" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT1_DIV" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT1_PHASE" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT2_DIV" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT2_PHASE" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT3_DIV" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT3_PHASE" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT4_DIV" *)
+  (* CORE_PARAMETER     = "USER_CLKOUT4_PHASE" *)
+ 
+Para verificar si el PLL está generando con éxito el reloj de 10 MHz en la FPGA, se realiza un módulo de prueba:
+1. Configurar el reloj externo de entrada a 100 MHz.
+2. Configurar el reloj interno de salida a 10 MHz.
+3. Medir la frecuencia del reloj interno de salida utilizando un osciloscopio o un analizador de espectro.
+4. Verificar que la frecuencia medida del reloj interno de salida sea de 10 MHz.
+
+El módulo de prueba:
+
+`timescale 1ns / 1ps
+
+module clk_wiz_test;
+
+  // Inputs
+  reg clk_in;
+
+  // Outputs
+  wire clk_out;
+
+  // Instantiate the Clocking Wizard
+  clk_wiz u_clk_wiz (
+    .clk_in(clk_in),
+    .clk_out(clk_out)
+  );
+
+  initial begin
+    // Set the input clock to 100 MHz
+    clk_in = 1'b0;
+    #5;
+    clk_in = 1'b1;
+
+    // Wait for the PLL to lock
+    #500;
+
+    // Measure the output clock frequency
+    integer period_cycles = 0;
+    integer timeout_cycles = 1000000;
+    while (clk_out != 1'b0 && period_cycles < timeout_cycles) begin
+      period_cycles = period_cycles + 1;
+      #1;
+    }
+    if (period_cycles >= timeout_cycles) begin
+      $display("Error: Clock output did not toggle.");
+      $finish;
+    }
+
+    integer half_period_cycles = 0;
+    while (clk_out != 1'b1 && half_period_cycles < timeout_cycles) begin
+      half_period_cycles = half_period_cycles + 1;
+      #1;
+    }
+    if (half_period_cycles >= timeout_cycles) begin
+      $display("Error: Clock output did not toggle.");
+      $finish;
+    }
+
+    integer period = period_cycles * 2;
+    $display("Output clock frequency: %0d MHz", 1000 / period);
+    if (period < 49 || period > 51) begin
+      $display("Error: Output clock frequency is not within 1%% of 10 MHz.");
+      $finish;
+    }
+
+    $display("Test passed!");
+    $finish;
+  end
 
 endmodule
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Este módulo simplemente hace que un LED parpadee cada vez que se recibe un flanco de subida en la señal de reloj de 10 MHz.
-Para elaborar un testbench para validar a nivel de simulación el funcionamiento del PLL, se puede hacer como sigue:
+Este módulo prueba el PLL midiendo el período del reloj de salida y verificando si está dentro del rango del 1% de la frecuencia objetivo de 10 MHz.
+Si el período no está dentro del rango deseado, el módulo informará un error y finalizará.
+Si el período está dentro del rango deseado, el módulo informará que la prueba ha pasado y finalizará.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-module testbench;
+Para validar el funcionamiento del PLL a nivel de simulación, se puede crear un testbench que haga lo siguiente:
 
-reg clk_100MHz;
-wire clk_10MHz;
-reg reset;
+1. Configurar el reloj externo de entrada a 100 MHz en un generador de señal.
+2. Configurar el reloj interno de salida a 10 MHz en el módulo probado en la FPGA.
+3. Verificar que la frecuencia del reloj interno de salida sea de 10 MHz en el simulador.
 
-clk_checker dut (
-    .clk_10MHz(clk_10MHz),
-    .led(LED)
-);
+El testbench en Verilog:
 
-initial begin
-    reset = 1;
-    clk_100MHz = 0;
-    #10 reset = 0;
-    repeat (10000) #5 clk_100MHz = ~clk_100MHz;
-    #10000 $finish;
-end
+`timescale 1ns / 1ps
 
-always #5 clk_100MHz = ~clk_100MHz;
+module clk_wiz_testbench;
 
-initial begin
-    $dumpfile("testbench.vcd");
-    $dumpvars(0, testbench);
-    #100000;
-end
+  // Inputs
+  reg clk_in;
+
+  // Outputs
+  wire clk_out;
+
+  // Instantiate the Clocking Wizard
+  clk_wiz u_clk_wiz (
+    .clk_in(clk_in),
+    .clk_out(clk_out)
+  );
+
+  initial begin
+    // Set the input clock to 100 MHz
+    clk_in = 1'b0;
+    #5;
+    clk_in = 1'b1;
+
+    // Wait for the PLL to lock
+    #500;
+
+    // Measure the output clock frequency
+    integer period_cycles = 0;
+    integer timeout_cycles = 1000000;
+    while (period_cycles < timeout_cycles) begin
+      period_cycles = period_cycles + 1;
+      #1;
+    }
+
+    integer period = period_cycles * 2;
+    $display("Output clock frequency: %0d MHz", 1000 / period);
+    if (period < 49 || period > 51) begin
+      $display("Error: Output clock frequency is not within 1%% of 10 MHz.");
+      $finish;
+    }
+
+    $display("Test passed!");
+    $finish;
+  end
 
 endmodule
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Este testbench genera una señal de reloj de 100 MHz y la conecta al Clocking Wizard. También incluye el módulo "clk_checker" para verificar la salida de la señal
-de reloj de 10 MHz. Además, se incluye una señal de reset para asegurarse de que el módulo comience en un estado conocido.
-Una vez se ha completado la simulación y se ha verificado el correcto funcionamiento del PLL, se puede usar el mismo módulo en la FPGA para verificar
-el funcionamiento en el hardware real. 
+module tb;
 
+  reg clk_in;
+  wire clk_out;
 
+  clk_wiz_testbench u_clk_wiz_testbench (
+    .clk_in(clk_in),
+    .clk_out(clk_out)
+  );
 
+  initial begin
+    $dumpfile("tb.vcd");
+    $dumpvars(0, tb);
+
+    // Set the input clock to 100 MHz
+    forever #10 clk_in = ~clk_in;
+
+    // Wait for the PLL to lock
+    #50000;
+
+    // Finish the simulation
+    #1000000 $finish;
+  end
+
+endmodule
+
+Este testbench prueba el PLL midiendo el período del reloj de salida y verificando si está dentro del rango del 1% de la frecuencia objetivo de 10 MHz.
+Si el período no está dentro del rango deseado, el testbench informará un error y finalizará. Si el período está dentro del rango deseado, el testbench informará
+que la prueba ha pasado y finalizará. El testbench también genera un archivo de onda VCD para visualizar la simulación en un visor de ondas.
