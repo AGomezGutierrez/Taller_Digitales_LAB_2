@@ -1,1 +1,35 @@
+TABLAS DE VERDAD
+
+Codificador de tecla
+
+| key_sync | key_out |
+|:--------:|:-------:|
+|  4'b0000 | 4'b1110 |
+|  4'b0001 | 4'b1101 |
+|  4'b0010 | 4'b1011 |
+|  4'b0100 | 4'b0111 |
+|  4'b1111 | 4'b0000 |
+
+Soncronizador
+
+| clk | rst | key_in | key_sync |
+|:---:|:---:|:------:|:--------:|
+| pos |  0  |    X   |     X    |
+| pos |  1  |    X   |  4'b1111 |
+| pos |  0  |  4'bX  |   4'bX   |
+| pos |  1  |  4'bX  |   4'bX   |
+| neg |  X  |  4'bX  |   4'bX   |
+
+
+Antirrebote
+
+| count | key_sync | keypad_data |
+|:-----:|:--------:|:-----------:|
+| 2'b00 |   4'bX   |   4'b0000   |
+| 2'b01 |  4'bXXXX |   key_out   |
+| 2'b10 |   4'bX   |   4'b0000   |
+| 2'b11 |  4'bXXXX |   key_out   |
+|       |          |             |
+
+DIAGRAMA DE ESTADOS
 
