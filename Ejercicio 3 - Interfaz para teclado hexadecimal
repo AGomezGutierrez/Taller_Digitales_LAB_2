@@ -1,1 +1,64 @@
 
+interface KeyboardHex (
+  input logic [3:0] key_in,
+  output logic [3:0] key_out,
+  input logic clk,
+  input logic rst
+);
+
+  // Se Definen variables internas de la interfaz
+  logic [3:0] keypad_data;
+  logic [3:0] key_sync;
+  logic [1:0] count = 0;
+  logic [15:0] key_encoder;
+  logic clk_div;
+
+  // Definición de señal de salida
+  assign key_out = keypad_data;
+
+  // Codificador de tecla
+  always_comb begin
+    key_encoder = {4'b1110, 4'b1101, 4'b1011, 4'b0111};
+    keypad_data = key_encoder[key_sync];
+  end
+
+  // Sincronizador
+  always_ff @(posedge clk, negedge rst) begin
+    if (~rst) begin
+      key_sync <= 4'b1111;
+    end else begin
+      key_sync <= key_in;
+    end
+  end
+
+  // Antirrebote
+  always_ff @(posedge clk_div, negedge rst) begin
+    if (~rst) begin
+      // Reiniciar variables internas
+      count <= 2'b00;
+    end else begin
+      // Incrementar contador cada vez que se presiona una tecla
+      if (key_sync != 4'b1111) begin
+        count <= count + 1;
+      end
+
+      // Actualizar el valor de salida en función del contador
+      case (count)
+        2'b00: keypad_data <= 4'b0000;
+        2'b01: keypad_data <= key_out;
+        2'b10: keypad_data <= 4'b0000;
+        2'b11: keypad_data <= key_out;
+      endcase
+    end
+  end
+
+  // Divisor de reloj
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      clk_div <= 1'b0;
+    end else begin
+      clk_div <= ~clk_div;
+    end
+  end
+
+endinterface
