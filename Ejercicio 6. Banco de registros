@@ -1,1 +1,122 @@
 
+//En el siguiente código, el módulo demux recibe una entrada de datos data_in que se demultiplexa según el índice de escritura addr_rd. Si la señal we está en alto,
+//se escribe el valor de data_in en el registro correspondiente regs[addr_rd].
+//El módulo también tiene dos salidas de datos independientes rs1 y rs2, que multiplexan las salidas de los registros según las señales addr_rs1 y addr_rs2,
+//respectivamente. El registro 0x00h se trata como un registro de solo lectura y siempre devuelve 0x00000000 cuando se lee.
+//El módulo utiliza asignaciones condicionales ternarias para determinar si la dirección de registro es 0x00h y, en caso afirmativo, asignar 0x00000000 al registro
+//de salida correspondiente.
+//El código tiene añadido un testbench que escribe valores aleatorios en cada registro del banco y luego lee valores aleatorios de los registros rs1 y rs2.
+//El testbench utiliza las tareas write_regs y read_regs para realizar estas operaciones.
+//La tarea write_regs escribe valores aleatorios en cada registro del banco utilizando un bucle for. La tarea establece las señales data_in, addr_rd y we para escribir
+//en el registro correspondiente. Después de un breve retardo, la tarea desactiva la señal we para finalizar la escritura.
+//La tarea read_regs lee valores aleatorios de los registros rs1 y rs2 utilizando un bucle for. La tarea establece las señales addr_rs1 y addr_rs2 con valores aleatorios
+//para seleccionar los registros correspondientes. Después de un breve retardo, la tarea muestra los valores leídos de rs1 y rs2 utilizando la función $display.
+//El testbench utiliza un reloj clk que se genera en la sección initial utilizando la función forever. El testbench escribe valores aleatorios y luego lee valores
+//aleatorios después de un breve retardo. La simulación se detiene después de un breve retardo adicional utilizando la función $finish.
+//Este testbench permite verificar el funcionamiento del módulo demux al escribir valores aleatorios en los registros del banco y luego leer valores aleatorios
+//de los registros rs1 y rs2. Al utilizar valores aleatorios para seleccionar los registros de lectura, se puede verificar que el módulo demultiplexa correctamente
+//la entrada y presenta los valores correctos en las salidas.
+
+
+module demux (
+  input logic [31:0] data_in,
+  input logic [4:0] addr_rd,
+  input logic [4:0] addr_rs1,
+  input logic [4:0] addr_rs2,
+  input logic we,
+  output logic [31:0] rs1,
+  output logic [31:0] rs2
+);
+
+  logic [31:0] regs [31:0];
+
+  always @ (posedge clk) begin
+    if (we) begin
+      regs[addr_rd] <= data_in;
+    end
+  end
+
+  assign rs1 = (addr_rs1 == 5'h00) ? 32'h00000000 : regs[addr_rs1];
+  assign rs2 = (addr_rs2 == 5'h00) ? 32'h00000000 : regs[addr_rs2];
+
+endmodule
+
+module demux_tb;
+
+  // Inputs
+  logic [31:0] data_in;
+  logic [4:0] addr_rd;
+  logic [4:0] addr_rs1;
+  logic [4:0] addr_rs2;
+  logic we;
+  
+  // Outputs
+  logic [31:0] rs1;
+  logic [31:0] rs2;
+  
+  // Clock
+  logic clk;
+  
+  // Instanciación del módulo demux
+  
+  demux dut (
+    .data_in(data_in),
+    .addr_rd(addr_rd),
+    .addr_rs1(addr_rs1),
+    .addr_rs2(addr_rs2),
+    .we(we),
+    .rs1(rs1),
+    .rs2(rs2)
+  );
+  
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk;
+  end
+  
+  // Se Escriben valores aleatorios en todos los registros
+  
+  task write_regs;
+    integer i;
+    for (i = 0; i < 32; i++) begin
+      data_in = $random;
+      addr_rd = i;
+      we = 1;
+      #10;
+      we = 0;
+      #5;
+    end
+  endtask
+  
+  // Lectura de valores de registros aleatorios
+  
+  task read_regs;
+    integer i;
+    for (i = 0; i < 10; i++) begin
+      addr_rs1 = $random;
+      addr_rs2 = $random;
+      #10;
+      $display("rs1 = %h, rs2 = %h", rs1, rs2);
+    end
+  endtask
+  
+  // Testbench principal
+  
+  initial begin
+    
+    // Empezar por escribir en los registros
+    
+    write_regs();
+    
+    // Esperar
+    #100;
+    
+    // Leer los registros
+    read_regs();
+    
+    // Terminar la simulación
+    #10;
+    $finish();
+  end
+  
+endmodule
