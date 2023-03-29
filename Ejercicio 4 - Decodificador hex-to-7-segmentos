@@ -87,28 +87,28 @@ module tb_decodificador_hex_reg;
 endmodule
 
 //TESTBENCH
-Para este bloque se definen las entradas y salidas necesarias, así como una instancia del decodificador hexadecimal con el nombre dut. Se utiliza un generador
-de reloj para generar una señal de reloj periódica con un período de 10 unidades de tiempo. En la tarea inicial, se establece la señal de escritura en 1 para
-iniciar la simulación. También se utiliza un bucle repeat para generar datos aleatorios cuatro veces y esperar 10 unidades de tiempo entre cada uno.
-Después de generar los cuatro datos, se establece la señal de escritura en 0 para escribir los datos en el registro de entrada. Se esperan 20.000 unidades
-de tiempo para que los datos se escriban y luego hemos establecido la señal de escritura en 1 para detener la escritura en el registro de entrada.
-Finalmente, se utiliza $finish() para finalizar la simulación después de generar 5 conjuntos de datos aleatorios. Para realizar la simulación post-síntesis,
-Se necesita una descripción de la síntesis que incluya la asignación de pines y los tiempos de retraso. Para realizar la simulación post-implementación,
-se requiere una descripción de la implementación que incluya la topología de la red, la asignación de pines y los tiempos de retraso.
-Estos archivos se pueden generar utilizando herramientas de síntesis y de implementación de FPGA, Vivado de Xilinx. Teniendo estas descripciones,
-se puede utilizar un simulador de Verilog compatible con dichas herramientas para simular la síntesis y la implementación del diseño.
+//Para este bloque se definen las entradas y salidas necesarias, así como una instancia del decodificador hexadecimal con el nombre dut. Se utiliza un generador
+//de reloj para generar una señal de reloj periódica con un período de 10 unidades de tiempo. En la tarea inicial, se establece la señal de escritura en 1 para
+//iniciar la simulación. También se utiliza un bucle repeat para generar datos aleatorios cuatro veces y esperar 10 unidades de tiempo entre cada uno.
+//Después de generar los cuatro datos, se establece la señal de escritura en 0 para escribir los datos en el registro de entrada. Se esperan 20.000 unidades
+//de tiempo para que los datos se escriban y luego hemos establecido la señal de escritura en 1 para detener la escritura en el registro de entrada.
+//Finalmente, se utiliza $finish() para finalizar la simulación después de generar 5 conjuntos de datos aleatorios. Para realizar la simulación post-síntesis,
+//Se necesita una descripción de la síntesis que incluya la asignación de pines y los tiempos de retraso. Para realizar la simulación post-implementación,
+//se requiere una descripción de la implementación que incluya la topología de la red, la asignación de pines y los tiempos de retraso.
+//Estos archivos se pueden generar utilizando herramientas de síntesis y de implementación de FPGA, Vivado de Xilinx. Teniendo estas descripciones,
+//se puede utilizar un simulador de Verilog compatible con dichas herramientas para simular la síntesis y la implementación del diseño.
 
 module tb_decodificador_hex_reg;
 
-    // Inputs
+    // Entradas
     reg clk;
     reg we;
     reg [15:0] data_in;
 
-    // Outputs
+    // Salidas
     wire [6:0] display_out;
 
-    // Instantiate the DUT
+    // Instanciar el DUT
     decodificador_hex_reg dut (
         .clk(clk),
         .we(we),
@@ -122,7 +122,7 @@ module tb_decodificador_hex_reg;
         forever #5 clk = ~clk;
     end
 
-    // scribir los datos en el registro
+    // Escribir los datos en el registro
     initial begin
         we = 1'b1;
         #100;
