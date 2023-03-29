@@ -1,1 +1,145 @@
+//CONTADOR DEL PROGRAMA
+
+//En este código, el módulo contador tiene cinco entradas y una salida. La señal de reloj (clk) se utiliza para sincronizar la actualización del registro que almacena
+//el valor actual del contador (contador_reg). La señal de reinicio (reset) se utiliza para volver el contador a cero. La señal de incremento en cuatro (inc4)
+//se utiliza para sumar cuatro al valor actual del contador. La señal de salto (salto) se utiliza para establecer un valor específico en el contador. La señal de retención
+//(hold) se utiliza para mantener el valor actual del contador.
+//El código utiliza una sentencia always con una sensibilidad a todos los cambios de las entradas (@(*)) para actualizar el valor del contador. Si la señal de reinicio
+//está activa, se establece el valor del contador en cero. Si la señal de incremento en cuatro está activa, se suma cuatro al valor actual del contador. Si la señal de
+//retención está activa, no se realiza ninguna operación. Si ninguna de las tres señales anteriores está activa, se establece el valor del contador en el valor de la señal
+//de salto.
+//Finalmente, la salida del contador (out) se asigna al valor del registro contador_reg.
+
+module contador (
+  input        clk,      // Señal de reloj
+  input        reset,    // Señal de reinicio (activo en bajo)
+  input        inc4,     // Señal de incremento en cuatro
+  input [31:0] salto,    // Valor de salto
+  input        hold,     // Señal de retención
+  output [31:0] out      // Salida del contador
+);
+
+  // Registro que almacena el valor actual del contador
+  reg [31:0] contador_reg;
+
+  // Logica combinacional para las funciones del contador
+  always @(*) begin
+    if (reset) begin
+      contador_reg <= 0;          // Función de reinicio
+    end else if (inc4) begin
+      contador_reg <= contador_reg + 4;  // Función de incremento en cuatro
+    end else if (hold) begin
+      contador_reg <= contador_reg;  // Función de retención
+    end else begin
+      contador_reg <= salto;       // Función de salto
+    end
+  end
+
+  // Salida del contador
+  assign out = contador_reg;
+
+endmodule
+
+//TESTBENCH
+//En el testbench, se configuran los parámetros DELAY y TEST_LENGTH para establecer el retardo de la señal de reloj y la duración total de la prueba, respectivamente.
+//El módulo contador se instancia y se conectan sus entradas y salidas con señales del testbench.
+//El testbench comienza con la inicialización de todas las señales y espera algunos ciclos de reloj antes de comenzar la prueba real. Luego, se realizan varias pruebas
+//de cada una de las funciones del contador:
+
+//--Prueba de reinicio: se activa la señal de reinicio, se espera un ciclo de reloj y se desactiva la señal de reinicio.
+//--Prueba de incremento en cuatro: se activa la señal de incremento en cuatro, se espera un ciclo de reloj y se desactiva la señal de incremento en cuatro.
+//--Prueba de salto: se establece un valor específico para la señal de salto, se espera un ciclo de reloj y se desactiva la señal de salto.
+//--Prueba de retención: se activa la señal de retención, se espera un ciclo de reloj y se desactiva la señal de retención.
+
+//Después de realizar estas pruebas, se ejecuta una prueba aleatoria donde se generan señales de entrada aleatorias durante la duración total de la prueba.
+//En cada cambio de reloj, se muestra el valor actual del contador en la consola de simulación.
+//Una vez que se completa la prueba, se llama a la función $finish para terminar la simulación. Este testbench puede modificarse según las necesidades específicas
+//de la implementación del módulo contador.
+
+module contador_tb;
+
+  //Parámetros de configuración del testbench
+  
+  parameter DELAY = 5;    // Retardo de la señal de reloj
+  parameter TEST_LENGTH = 100;  // Duración total de la prueba
+
+  // Señales de entrada del testbench
+  
+  reg clk;
+  reg reset;
+  reg inc4;
+  reg [31:0] salto;
+  reg hold;
+
+  // Señal de salida del testbench
+  
+  wire [31:0] out;
+
+  // Instancia del módulo que se está probando
+  contador dut (
+    .clk(clk),
+    .reset(reset),
+    .inc4(inc4),
+    .salto(salto),
+    .hold(hold),
+    .out(out)
+  );
+
+  // Generación de señales de entrada del testbench
+  initial begin
+    // Inicialización de señales
+    clk = 0;
+    reset = 1;
+    inc4 = 0;
+    salto = 0;
+    hold = 0;
+
+    // Esperar algunos ciclos de reloj antes de comenzar
+    #DELAY;
+
+    // Prueba de reinicio
+    reset = 0;
+    #DELAY;
+    reset = 1;
+    #DELAY;
+
+    // Prueba de incremento en cuatro
+    inc4 = 1;
+    #DELAY;
+    inc4 = 0;
+    #DELAY;
+
+    // Prueba de salto
+    salto = 10;
+    #DELAY;
+    salto = 0;
+    #DELAY;
+
+    // Prueba de retención
+    hold = 1;
+    #DELAY;
+    hold = 0;
+    #DELAY;
+
+    // Prueba aleatoria
+    for (int i = 0; i < TEST_LENGTH; i++) begin
+      clk = ~clk;
+      reset = (i < TEST_LENGTH/4) ? 0 : 1;
+      inc4 = (i >= TEST_LENGTH/4 && i < TEST_LENGTH/2) ? 1 : 0;
+      salto = (i >= TEST_LENGTH/2 && i < TEST_LENGTH*3/4) ? 100 : 0;
+      hold = (i >= TEST_LENGTH*3/4) ? 1 : 0;
+      #DELAY;
+    end
+
+    // Terminar la simulación
+    $finish;
+  end
+
+  // Mostrar la salida del contador en cada cambio de reloj
+  always @(posedge clk) begin
+    $display("Contador: %d", out);
+  end
+
+endmodule
+
 
