@@ -1,22 +1,6 @@
 
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 04/08/2023 04:03:46 PM
-// Design Name: 
-// Module Name: Proyecto_2
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
 //Esta parte del código define el módulo "Proyecto_2" con cinco señales de entrada (clk, reset, btn, sw y EN)
