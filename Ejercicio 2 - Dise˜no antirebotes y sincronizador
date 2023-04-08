@@ -1,229 +1,83 @@
 
-module debounce_sync_counter (
-  input logic clk,  // Reloj del sistema
-  input logic rst,  // Señal de reset
-  input logic btn,  // Entrada del botón/interruptor
-  input logic en,   // Señal de habilitación de incremento de conteo
-  output logic [7:0] count  // Contador de pruebas sincronizado con el reloj
-);
-
-  // Registros para almacenar el estado anterior y actual del botón
-  logic btn_state;
-  logic btn_synced_state;
-
-  // Máquina de estados para detectar los flancos del botón
-  enum logic [1:0] {
-    IDLE,
-    PRE_PRESSED,
-    PRESSED,
-    PRE_RELEASED,
-    RELEASED
-  } btn_fsm_state = IDLE;
-
-  always_ff @(posedge clk or posedge rst) begin
-    if (rst) begin
-      // Restablecer el estado de la máquina de estados y los registros del botón
-      btn_fsm_state <= IDLE;
-      btn_state <= 0;
-      btn_synced_state <= 0;
-    end else begin
-      // Actualizar el estado del botón
-      btn_state <= btn;
-
-      // Máquina de estados para detectar flancos del botón
-      case (btn_fsm_state)
-        IDLE:
-          if (!btn_state) begin
-            btn_fsm_state <= PRE_PRESSED;
-          end
-        PRE_PRESSED:
-          if (!btn_state) begin
-            btn_fsm_state <= PRESSED;
-          end else begin
-            btn_fsm_state <= IDLE;
-          end
-        PRESSED:
-          if (btn_state) begin
-            btn_fsm_state <= PRE_RELEASED;
-          end
-        PRE_RELEASED:
-          if (btn_state) begin
-            btn_fsm_state <= RELEASED;
-          end else begin
-            btn_fsm_state <= PRESSED;
-          end
-        RELEASED:
-          if (!btn_state) begin
-            btn_fsm_state <= PRE_PRESSED;
-          end
-      endcase
-
-      // Actualizar la salida sincronizada del botón
-      case (btn_fsm_state)
-        IDLE:
-          btn_synced_state <= 0;
-        PRESSED, PRE_RELEASED:
-          btn_synced_state <= 1;
-        default:
-          btn_synced_state <= btn_synced_state;
-      endcase
-    end
-  end
-
-  // Contador de pruebas sincronizado con el reloj y habilitado por EN
-  always_ff @(posedge clk or posedge rst) begin
-    if (rst) begin
-      count <= 0;
-    end else if (en && btn_synced_state && (btn_synced_state != btn_state)) begin
-      count <= count + 1;
-    end else begin
-      count <= count;
-    end
-  end
-
-endmodule
-
-module debounce_sync_counter_testbench;
-
-  // Señal de reloj
-  logic clk;
-
-  // Señal de reset
-  logic rst;
-
-  // Entrada del botón
-  logic btn;
-
-  // Señal de habilitación del contador
-  logic en;
-
-  // Salida del contador
-  logic [7:0] count;
-
-  // Parámetros del generador de pulsos
-  parameter PULSE_PERIOD = 10;
-  parameter PULSE_WIDTH = 5;
-
-  // Generador de pulsos para simular la entrada del botón
-  always #(PULSE_PERIOD / 2) clk = ~clk;
-
-  always #(PULSE_WIDTH / 2) btn = 1;
-  always #(PULSE_PERIOD - PULSE_WIDTH / 2) btn = 0;
-
-  // Instancia del bloque sincronizador y anti-rebote
-  debounce_sync_counter dut (
-    .clk(clk),
-    .rst(rst),
-    .btn(btn),
-    .en(en),
-    .count(count)
-  );
-
-  // Secuencia de pruebas
-  initial begin
-    // Restablecer el circuito
-    rst <= 1;
-    en <= 0;
-    #100;
-    rst <= 0;
-
-    // Habilitar el contador
-    en <= 1;
-
-    // Esperar 10 pulsos y verificar el valor del contador
-    #100;
-    if (count !== 10) $error("Conteo incorrecto: esperado 10, obtenido %d", count);
-
-    // Deshabilitar el contador
-    en <= 0;
-
-    // Esperar 10 pulsos y verificar que el valor del contador no ha cambiado
-    #100;
-    if (count !== 10) $error("Conteo incorrecto: esperado 10, obtenido %d", count);
-
-    // Habilitar el contador de nuevo y esperar otros 10 pulsos
-    en <= 1;
-    #100;
-    if (count !== 20) $error("Conteo incorrecto: esperado 20, obtenido %d", count);
-
-    // Finalizar la simulación
-    #100;
-    $finish;
-  end
-
-endmodule
-
-module top(
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 04/08/2023 04:03:46 PM
+// Design Name: 
+// Module Name: Proyecto_2
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+//Esta parte del código define el módulo "Proyecto_2" con cinco señales de entrada (clk, reset, btn, sw y EN)
+//y tres señales de salida (btn_sync, sw_sync y count). La directiva "reg" en la definición de las salidas indica
+//que son registros y no cables. Las entradas se definen como "input" y las salidas se definen como "output".
+//El "7:0" después de "reg" indica que la señal count es de 8 bits. En resumen, esta parte del código define las entradas
+//y salidas del módulo "Proyecto_2".
+module Proyecto_2 (
+//Definicion de entradas
   input clk,
-  input rst,
+  input reset,
   input btn,
-  output [7:0] leds
+  input sw,
+  input EN,
+  //Definicion de salidas
+  output reg btn_sync,
+  output reg sw_sync,
+  output reg [7:0] count
 );
-
-  // Señal de habilitación del contador
-  logic en;
-
-  // Salida del contador
-  logic [7:0] count;
-
-  // Instancia del bloque sincronizador y anti-rebote
-  debounce_sync_counter dut (
-    .clk(clk),
-    .rst(rst),
-    .btn(btn),
-    .en(en),
-    .count(count)
-  );
-
-  // Asignar la salida del contador a los LED de la tarjeta
-  assign leds = count;
-
-endmodule
-
-module debounce_sync_counter_tb;
-
-  // Parámetros del testbench
-  parameter CLK_PERIOD = 10; // Periodo del reloj en ns
-  parameter BTN_PERIOD = 50; // Periodo del botón en ns
-
-  // Entradas del testbench
-  logic clk;
-  logic rst;
-  logic btn;
-
-  // Salidas del testbench
-  logic [7:0] leds;
-
-  // Instancia del bloque superior (top)
-  top dut (
-    .clk(clk),
-    .rst(rst),
-    .btn(btn),
-    .leds(leds)
-  );
-
-  // Generador de reloj
-  always #(`CLK_PERIOD/2) clk = ~clk;
-
-  // Generador de pulsos para el botón
-  always #(`BTN_PERIOD/2) btn = 1'b1;
-  always #(`BTN_PERIOD/2) btn = 1'b0;
-
-  // Test de reset
-  initial begin
-    rst = 1'b1;
-    #(`CLK_PERIOD * 10) rst = 1'b0;
-  end
-
-  // Test de conteo de pulsos
-  initial begin
-    #(`CLK_PERIOD * 20)
-    for (int i = 0; i < 10; i++) begin
-      assert(leds == i) else $error("Error en el test de conteo");
-      #(`BTN_PERIOD * 5)
+  
+ //timescale 1ns/1ps  // la directiva timescale está dentro del bloque de código
+  //Estas líneas de código definen tres registros de dos bits cada uno para almacenar los estados previos de las señales de entrada
+  //"btn", "sw" y "EN", con un valor inicial de "11" en binario para cada registro.
+  reg [1:0] btn_state = 2'b11;
+  reg [1:0] sw_state = 2'b11;
+  reg [1:0] en_state = 2'b11;
+  //La parte del código que comienza con "always @(posedge clk or posedge reset) begin" es un bloque de código
+  //que se ejecuta en cada flanco de subida del reloj (clk) o del reset (reset).
+  //Si el reset está activo (reset = 1), los registros de estado y las señales de salida se establecen en sus valores iniciales.
+  //De lo contrario, se actualizan los valores de los registros de estado con los valores actuales de las señales de entrada.
+  //Luego, si la señal "btn_state" o "sw_state" cambia de 2'b01 a 2'b10 o viceversa, se cambia el valor de la señal de salida
+  //correspondiente "btn_sync" o "sw_sync" a su valor complementario. Esto permite sincronizar las señales de entrada "btn" y "sw"
+  //con la señal de reloj.
+  //Finalmente, si la señal "en_state" es igual a 2'b01, entonces la señal de salida "count" se incrementa en uno.
+  //Esto cuenta los flancos ascendentes de la señal "EN" y proporciona una salida de conteo "count".
+  //En resumen, esta parte del código es responsable de la lógica de sincronización y de conteo en el módulo "Proyecto_2".
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      btn_state <= 2'b11;
+      sw_state <= 2'b11;
+      en_state <= 2'b11;
+      btn_sync <= 1'b0;
+      sw_sync <= 1'b0;
+      count <= 8'd0;
+    end else begin
+      btn_state <= {btn_state[0], btn};
+      sw_state <= {sw_state[0], sw};
+      en_state <= {en_state[0], EN};
+      
+      if (btn_state == 2'b01 || btn_state == 2'b10) begin
+        btn_sync <= ~btn_sync;
+      end
+      
+      if (sw_state == 2'b01 || sw_state == 2'b10) begin
+        sw_sync <= ~sw_sync;
+      end
+      
+      if (en_state == 2'b01) begin
+        count <= count + 1;
+      end
     end
-    $display("Test de conteo exitoso");
-    $finish;
   end
-
+  
 endmodule
