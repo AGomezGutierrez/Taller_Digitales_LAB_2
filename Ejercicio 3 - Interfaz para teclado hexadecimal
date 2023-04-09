@@ -1,67 +1,63 @@
-
-interface KeyboardHex (
-  input logic [3:0] key_in,
-  output logic [3:0] key_out,
-  input logic clk,
-  input logic rst
+`timescale 1ns / 1ps
+module interfaz_teclado_hex_divisor(
+  input wire clk,           // reloj
+  input wire reset,         // señal de reset
+  input wire [3:0] teclado, // entrada de teclado
+  output reg [3:0] salida   // salida de datos
 );
 
-  // Se Definen variables internas de la interfaz
-  logic [3:0] keypad_data;
-  logic [3:0] key_sync;
-  logic [1:0] count = 0;
-  logic [15:0] key_encoder;
-  logic clk_div;
+  parameter DIVISOR = 100;  // divisor de reloj
 
-  // Definición de señal de salida
-  assign key_out = keypad_data;
-
-  // Codificador de tecla
-  always_comb begin
-    key_encoder = {4'b1110, 4'b1101, 4'b1011, 4'b0111};
-    keypad_data = key_encoder[key_sync];
-  end
-
-  // Sincronizador
-  always_ff @(posedge clk, negedge rst) begin
-    if (~rst) begin
-      key_sync <= 4'b1111;
+  // registro para almacenar el estado anterior del teclado
+  reg [3:0] tecla_anterior;
+  // variable para almacenar el estado actual del teclado
+  wire [3:0] tecla_actual;
+  // contador de división de reloj
+  reg [6:0] contador = 0;
+  
+  // sincronización de la entrada del teclado
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      tecla_anterior <= 4'b0000;
     end else begin
-      key_sync <= key_in;
+      tecla_anterior <= tecla_actual;
     end
   end
-
-  // Antirrebote
-  always_ff @(posedge clk_div, negedge rst) begin
-    if (~rst) begin
-      // Reiniciar variables internas
-      count <= 2'b00;
+  
+  // detección de cambios en la entrada del teclado
+  assign tecla_actual = teclado & (~tecla_anterior);
+  
+  // máquina de estados para antirrebote y lectura de tecla
+  reg [1:0] estado = 2'b00;
+  parameter ESPERA = 2'b00, LECTURA = 2'b01;
+  
+  always @(posedge clk) begin
+    if (reset) begin
+      estado <= ESPERA;
+      contador <= 0;
     end else begin
-      // Incrementar contador cada vez que se presiona una tecla
-      if (key_sync != 4'b1111) begin
-        count <= count + 1;
+      // divisor de reloj
+      if (contador == DIVISOR - 1) begin
+        contador <= 0;
+      end else begin
+        contador <= contador + 1;
       end
-
-      // Actualizar el valor de salida en función del contador
-      case (count)
-        2'b00: keypad_data <= 4'b0000;
-        2'b01: keypad_data <= key_out;
-        2'b10: keypad_data <= 4'b0000;
-        2'b11: keypad_data <= key_out;
+      
+      case (estado)
+        ESPERA: begin
+          if (tecla_actual != 0) begin
+            estado <= LECTURA;
+          end
+        end
+        
+        LECTURA: begin
+          if (tecla_actual == 0) begin
+            salida <= tecla_anterior;
+            estado <= ESPERA;
+          end
+        end
       endcase
     end
   end
-
-  // Divisor de reloj
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      clk_div <= 1'b0;
-    end else begin
-      clk_div <= ~clk_div;
-    end
-  end
-
-endinterface
-
-
-
+  
+endmodule
