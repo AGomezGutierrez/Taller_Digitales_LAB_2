@@ -1,145 +1,112 @@
 //CONTADOR DEL PROGRAMA
 
-//En este código, el módulo contador tiene cinco entradas y una salida. La señal de reloj (clk) se utiliza para sincronizar la actualización del registro que almacena
-//el valor actual del contador (contador_reg). La señal de reinicio (reset) se utiliza para volver el contador a cero. La señal de incremento en cuatro (inc4)
-//se utiliza para sumar cuatro al valor actual del contador. La señal de salto (salto) se utiliza para establecer un valor específico en el contador. La señal de retención
-//(hold) se utiliza para mantener el valor actual del contador.
-//El código utiliza una sentencia always con una sensibilidad a todos los cambios de las entradas (@(*)) para actualizar el valor del contador. Si la señal de reinicio
-//está activa, se establece el valor del contador en cero. Si la señal de incremento en cuatro está activa, se suma cuatro al valor actual del contador. Si la señal de
-//retención está activa, no se realiza ninguna operación. Si ninguna de las tres señales anteriores está activa, se establece el valor del contador en el valor de la señal
-//de salto.
-//Finalmente, la salida del contador (out) se asigna al valor del registro contador_reg.
-
-module contador (
-  input        clk,      // Señal de reloj
-  input        reset,    // Señal de reinicio (activo en bajo)
-  input        inc4,     // Señal de incremento en cuatro
-  input [31:0] salto,    // Valor de salto
-  input        hold,     // Señal de retención
-  output [31:0] out      // Salida del contador
+`timescale 1ns / 1ps
+//El bloque module program_counter define el módulo program_counter que implementa un contador de programa.
+//Este módulo tiene cinco entradas y dos salidas:
+module program_counter (
+    input clk,
+    input rst,
+    input [31:0] jump,
+    input [1:0] op,
+    output reg [31:0] pc,
+    output reg [31:0] PCInc
 );
 
-  // Registro que almacena el valor actual del contador
-  reg [31:0] contador_reg;
 
-  // Logica combinacional para las funciones del contador
-  always @(*) begin
-    if (reset) begin
-      contador_reg <= 0;          // Función de reinicio
-    end else if (inc4) begin
-      contador_reg <= contador_reg + 4;  // Función de incremento en cuatro
-    end else if (hold) begin
-      contador_reg <= contador_reg;  // Función de retención
+//El código always @(posedge clk, posedge rst) begin define un bloque always sensible al flanco de subida del reloj (posedge clk)
+//y al flanco de subida de la señal de reset (posedge rst). Dentro de este bloque se especifica un conjunto de instrucciones que
+//se ejecutarán cada vez que se produzca alguno de estos eventos.
+always @(posedge clk, posedge rst) begin
+    if (rst) begin
+        pc <= 0;
+        PCInc <= 4;
     end else begin
-      contador_reg <= salto;       // Función de salto
+        case (op)
+            2'b00: begin // reset
+                pc <= 0;
+                PCInc <= 4;
+            end
+            2'b01: begin // hold
+                pc <= pc;
+                PCInc <= pc + 4;
+            end
+            2'b10: begin // PC+4
+                pc <= pc + 4;
+                PCInc <= pc + 4;
+            end
+            2'b11: begin // jump
+                pc <= jump;
+                PCInc <= jump + 4;
+            end
+        endcase
     end
-  end
-
-  // Salida del contador
-  assign out = contador_reg;
+end
 
 endmodule
 
-//TESTBENCH
-//En el testbench, se configuran los parámetros DELAY y TEST_LENGTH para establecer el retardo de la señal de reloj y la duración total de la prueba, respectivamente.
-//El módulo contador se instancia y se conectan sus entradas y salidas con señales del testbench.
-//El testbench comienza con la inicialización de todas las señales y espera algunos ciclos de reloj antes de comenzar la prueba real. Luego, se realizan varias pruebas
-//de cada una de las funciones del contador:
 
-//--Prueba de reinicio: se activa la señal de reinicio, se espera un ciclo de reloj y se desactiva la señal de reinicio.
-//--Prueba de incremento en cuatro: se activa la señal de incremento en cuatro, se espera un ciclo de reloj y se desactiva la señal de incremento en cuatro.
-//--Prueba de salto: se establece un valor específico para la señal de salto, se espera un ciclo de reloj y se desactiva la señal de salto.
-//--Prueba de retención: se activa la señal de retención, se espera un ciclo de reloj y se desactiva la señal de retención.
+//La línea module tb_program_counter; es el módulo de prueba que se utilizará para verificar el correcto funcionamiento
+//del módulo program_counter.
+module tb_program_counter;
 
-//Después de realizar estas pruebas, se ejecuta una prueba aleatoria donde se generan señales de entrada aleatorias durante la duración total de la prueba.
-//En cada cambio de reloj, se muestra el valor actual del contador en la consola de simulación.
-//Una vez que se completa la prueba, se llama a la función $finish para terminar la simulación. Este testbench puede modificarse según las necesidades específicas
-//de la implementación del módulo contador.
+reg clk;
+reg rst;
+reg [31:0] jump;
+reg [1:0] op;
+wire [31:0] pc;
+wire [31:0] PCInc;
 
-module contador_tb;
 
-  //Parámetros de configuración del testbench
-  
-  parameter DELAY = 5;    // Retardo de la señal de reloj
-  parameter TEST_LENGTH = 100;  // Duración total de la prueba
-
-  // Señales de entrada del testbench
-  
-  reg clk;
-  reg reset;
-  reg inc4;
-  reg [31:0] salto;
-  reg hold;
-
-  // Señal de salida del testbench
-  
-  wire [31:0] out;
-
-  // Instancia del módulo que se está probando
-  contador dut (
+//La línea program_counter dut( instancia el módulo program_counter y conecta sus puertos de entrada y salida con señales
+//definidas en el módulo tb_program_counter. La instancia se nombra como dut.
+program_counter dut(
     .clk(clk),
-    .reset(reset),
-    .inc4(inc4),
-    .salto(salto),
-    .hold(hold),
-    .out(out)
-  );
+    .rst(rst),
+    .jump(jump),
+    .op(op),
+    .pc(pc),
+    .PCInc(PCInc)
+);
 
-  // Generación de señales de entrada del testbench
-  initial begin
-    // Inicialización de señales
+
+//La sección initial begin inicializa las señales de entrada del módulo de prueba, en este caso se inicializa la señal clk en 0
+//y luego se establece una secuencia infinita de pulsos de reloj con un período de 5 unidades de tiempo (1ns / 1ps),
+//alternando entre 0 y 1 en cada ciclo.
+initial begin
     clk = 0;
-    reset = 1;
-    inc4 = 0;
-    salto = 0;
-    hold = 0;
+    forever #5 clk = ~clk;
+end
 
-    // Esperar algunos ciclos de reloj antes de comenzar
-    #DELAY;
 
-    // Prueba de reinicio
-    reset = 0;
-    #DELAY;
-    reset = 1;
-    #DELAY;
+//La sección de código initial begin en este caso se utiliza para inicializar las señales de entrada rst, op y jump.
+//Despues, el código espera por un tiempo determinado, cambia los valores de op para probar diferentes operaciones del módulo,
+//establece el valor de jump y finalmente finaliza la simulación con $finish.
+initial begin
+    rst = 1;
+    op = 2'b00;
+    #10 rst = 0;
+    #10 op = 2'b10;
+    #10 op = 2'b10;
+    #10 op = 2'b11;
+    #10 jump = 32'h80000000;
+    #10 op = 2'b10;
+    #10 op = 2'b00;
+    #10 $finish;
+end
 
-    // Prueba de incremento en cuatro
-    inc4 = 1;
-    #DELAY;
-    inc4 = 0;
-    #DELAY;
 
-    // Prueba de salto
-    salto = 10;
-    #DELAY;
-    salto = 0;
-    #DELAY;
+//La línea always @(posedge clk, posedge rst) indica que el bloque begin-end que la sigue se ejecutará en cada flanco de subida
+//del reloj (posedge clk) o del reset (posedge rst). En este caso, el bloque de código contiene una llamada a $display que muestra
+//los valores de pc y PCInc.
 
-    // Prueba de retención
-    hold = 1;
-    #DELAY;
-    hold = 0;
-    #DELAY;
+//La línea always #1 clk = ~clk hace que el valor de clk cambie cada ciclo de reloj (#1) a su valor complementario (~clk),
+//es decir, de 0 a 1 y de 1 a 0. Esto genera una señal de reloj que se utiliza para sincronizar los bloques del diseño.
 
-    // Prueba aleatoria
-    for (int i = 0; i < TEST_LENGTH; i++) begin
-      clk = ~clk;
-      reset = (i < TEST_LENGTH/4) ? 0 : 1;
-      inc4 = (i >= TEST_LENGTH/4 && i < TEST_LENGTH/2) ? 1 : 0;
-      salto = (i >= TEST_LENGTH/2 && i < TEST_LENGTH*3/4) ? 100 : 0;
-      hold = (i >= TEST_LENGTH*3/4) ? 1 : 0;
-      #DELAY;
-    end
+always @(posedge clk, posedge rst) begin
 
-    // Terminar la simulación
-    $finish;
-  end
+    $display("pc = %h, PCInc = %h", pc, PCInc);
+end
 
-  // Mostrar la salida del contador en cada cambio de reloj
-  always @(posedge clk) begin
-    $display("Contador: %d", out);
-  end
+always #1 clk = ~clk;
 
 endmodule
-
-
