@@ -1,148 +1,64 @@
-//Seguidamente, se define el módulo decodificador_hex_reg con las entradas y salidas necesarias, y se añade un registro de 16 bits para almacenar el valor de entrada
-//y actualizarlo cuando se reciba una señal de WE. También se utilizan dos instancias del decodificador hexadecimal para convertir los valores hex1 y hex2
-//en los valores de segmento necesarios para mostrarlos en los displays de 7 segmentos. Se utiliza la asignación {display_out1, display_out2}
-//para concatenar los valores de salida de ambos decodificadores en una sola señal de salida display_out.
-//Finalmente, se cierra el módulo con endmodule.
-
-module decodificador_hex_reg(
-    input clk,
-    input [15:0] data_in,
-    input we,
-    output reg [6:0] display_out
+`timescale 1ns / 1ps
+// Definición del módulo decodificador de hexadecimal
+module hex_to_7seg_decoder (
+    input [3:0] hex_in, // entrada hexadecimal de 4 bits
+    output reg [6:0] seg_out  // salida de 7 segmentos de 7 bits
 );
 
-reg [15:0] data_in_reg;
-reg [3:0] hex1;
-reg [3:0] hex2;
+// Asignación de valores a la salida seg_out basado en la entrada hex_in
+always @* begin
+    case (hex_in)
+        4'h0: seg_out = 7'b1000000;
+        4'h1: seg_out = 7'b1111001;
+        4'h2: seg_out = 7'b0100100;
+        4'h3: seg_out = 7'b0110000;
+        4'h4: seg_out = 7'b0011001;
+        4'h5: seg_out = 7'b0010010;
+        4'h6: seg_out = 7'b0000010;
+        4'h7: seg_out = 7'b1111000;
+        4'h8: seg_out = 7'b0000000;
+        4'h9: seg_out = 7'b0011000;
+        4'ha: seg_out = 7'b0001000;
+        4'hb: seg_out = 7'b0000011;
+        4'hc: seg_out = 7'b0100111;
+        4'hd: seg_out = 7'b0100001;
+        4'he: seg_out = 7'b0000110;
+        4'hf: seg_out = 7'b0001110;
+        default: seg_out = 7'b1111111;
+    endcase
+end
 
-decodificador_hexadecimal dec1 (
-    .hex_in(hex1),
-    .display_out(display_out1)
+endmodule
+
+// Definición del testbench
+module tb;
+
+reg [15:0] reg_in; // registro de entrada de 16 bits
+reg we; // señal de habilitación de escritura
+wire [13:0] seg_out; // salida de 7 segmentos de 14 bi
+
+// Instanciación del módulo hex_to_7seg_decoder y conexión de las señale
+hex_to_7seg_decoder dut (
+    .hex_in(reg_in[3:0]), // Conexión de los bits 3 a 0 del registro de entrada reg_in a la entrada hex_in del módulo
+    .seg_out(seg_out) // Conexión de la salida seg_out del módulo a la señal de salida seg_out
 );
 
-decodificador_hexadecimal dec2 (
-    .hex_in(hex2),
-    .display_out(display_out2)
-);
+// Inicialización del bloque de pruebas
+initial begin
+    we = 1;        // Inicialización de la señal de habilitación de escritura en 1
+    reg_in = 16'h0000;  // Inicialización del registro de entrada en 0
+    #10; // Espera de 10 unidades de tiempo antes de continuar
+    we = 0; // Desactivación de la señal de habilitación de escritura
+    #2000000; // Espera de 2 segundos antes de detener la simulación
+    $finish; // Detención de la simulación
+end
 
-assign display_out = {display_out1, display_out2};
-
-always @(posedge clk) begin
+// Generación de datos aleatorios en el registro de entrada reg_in cada 1 unidad de tiempo si la señal 
+//de habilitación de escritura WE está activa
+always #1 begin
     if (we) begin
-        data_in_reg <= data_in;
+        reg_in = $random;
     end
 end
-
-always @(*) begin
-    hex1 = data_in_reg[15:12];
-    hex2 = data_in_reg[11:8];
-end
-
-endmodule
-
-//BLOQUE DE PREBAS
-
-//En el bloque de pruebas tb_decodificador_hex_reg, se definen las entradas y salidas necesarias, incluyendo la señal de reloj clk, la señal de escritura we,
-//el registro de entrada de 16 bits data_in y la salida display_out. Se instanció el módulo decodificador_hex_reg y conectado todas las señales.
-//En la primera tarea inicial, se ha creado una señal de reloj periódica con un período de 10 unidades de tiempo, alternando entre 0 y 1.
-//En la segunda tarea inicial, se ha inicializado la señal de escritura en 1, y generado datos aleatorios utilizando el generador de números
-//aleatorios incorporado $random. Se utiliza un bucle repeat para generar cuatro datos aleatorios y esperar 10 unidades de tiempo entre cada uno.
-//Después de generar los cuatro datos, se estableció la señal de escritura en 0 para escribir los datos en el registro de entrada. Hemos esperado 2 segundos
-//(2000000 unidades de tiempo) y luego se establece la señal de escritura en 1 para detener la escritura en el registro de entrada.
-//Por último, hemos se utiliza $finish() para finalizar la simulación después de generar 10 conjuntos de datos aleatorios.
-
-
-module tb_decodificador_hex_reg;
-    reg clk;
-    reg we;
-    reg [15:0] data_in;
-    wire [6:0] display_out;
-
-    decodificador_hex_reg dut (
-        .clk(clk),
-        .we(we),
-        .data_in(data_in),
-        .display_out(display_out)
-    );
-
-    initial begin
-        clk = 0;
-        forever #5 clk = ~clk;
-    end
-
-    initial begin
-        we = 1'b1;
-        repeat (10) begin
-            #100 $display("Generando datos aleatorios");
-            repeat (4) begin
-                data_in = $random;
-                #10;
-            end
-            we = 1'b0;
-            #2000000;
-            we = 1'b1;
-        end
-        $finish();
-    end
-endmodule
-
-//TESTBENCH
-//Para este bloque se definen las entradas y salidas necesarias, así como una instancia del decodificador hexadecimal con el nombre dut. Se utiliza un generador
-//de reloj para generar una señal de reloj periódica con un período de 10 unidades de tiempo. En la tarea inicial, se establece la señal de escritura en 1 para
-//iniciar la simulación. También se utiliza un bucle repeat para generar datos aleatorios cuatro veces y esperar 10 unidades de tiempo entre cada uno.
-//Después de generar los cuatro datos, se establece la señal de escritura en 0 para escribir los datos en el registro de entrada. Se esperan 20.000 unidades
-//de tiempo para que los datos se escriban y luego hemos establecido la señal de escritura en 1 para detener la escritura en el registro de entrada.
-//Finalmente, se utiliza $finish() para finalizar la simulación después de generar 5 conjuntos de datos aleatorios. Para realizar la simulación post-síntesis,
-//Se necesita una descripción de la síntesis que incluya la asignación de pines y los tiempos de retraso. Para realizar la simulación post-implementación,
-//se requiere una descripción de la implementación que incluya la topología de la red, la asignación de pines y los tiempos de retraso.
-//Estos archivos se pueden generar utilizando herramientas de síntesis y de implementación de FPGA, Vivado de Xilinx. Teniendo estas descripciones,
-//se puede utilizar un simulador de Verilog compatible con dichas herramientas para simular la síntesis y la implementación del diseño.
-
-module tb_decodificador_hex_reg;
-
-    // Entradas
-    reg clk;
-    reg we;
-    reg [15:0] data_in;
-
-    // Salidas
-    wire [6:0] display_out;
-
-    // Instanciar el DUT
-    decodificador_hex_reg dut (
-        .clk(clk),
-        .we(we),
-        .data_in(data_in),
-        .display_out(display_out)
-    );
-
-    // Generacion del reloj 
-    initial begin
-        clk = 0;
-        forever #5 clk = ~clk;
-    end
-
-    // Escribir los datos en el registro
-    initial begin
-        we = 1'b1;
-        #100;
-
-        // Escribir los datos en el registro 5 veces
-        repeat (5) begin
-            // Generar datos aleatorios
-            repeat (4) begin
-                data_in = $random;
-                #10;
-            end
-            we = 1'b0;
-            #20000;
-            we = 1'b1;
-        end
-
-        #100;
-
-        // Fin de la simulación
-        $finish();
-    end
 
 endmodule
